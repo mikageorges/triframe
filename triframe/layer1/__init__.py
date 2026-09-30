@@ -1,7 +1,7 @@
 """
 triframe/layer1.py
 
-Layer 1 (model-functional): what a trained model's own internal
+Layer 1 (diagnostics): what a trained model's own internal
 mechanisms directly expose about token reliance, via two signals.
 
   aggregate_attention() — per-token attention weight, averaged over

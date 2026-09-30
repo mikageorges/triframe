@@ -1,8 +1,8 @@
 """
 triframe/tokens.py
 
-Domain-agnostic token registry for triframe three-layer interpretability
-framework (model-functional -> associational -> causal).
+Domain-agnostic token registry for the triframe three-layer interpretability
+framework (diagnostics -> associational -> interventional).
 
 A TokenRegistry organizes a model's input features into named TOKENS
 (called "subgroups" in some domains) grouped into BLOCKS (a block is a

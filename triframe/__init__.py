@@ -1,14 +1,15 @@
 """
-triframe — three-layer causal interpretability for token-structured models.
+triframe — three-layer interpretability for token-structured models,
+spanning model diagnostics, associational, and interventional evidence.
 
 Validates subgroup/token-level interpretability claims at three
 progressively stronger levels:
 
-  Layer 1 (model-functional) — what a trained model's own internals
+  Layer 1 (diagnostics)      — what a trained model's own internals
     (attention, ablation) directly expose about token reliance.
   Layer 2 (associational)    — how strongly a token's feature
     distribution differs across groups, independent of any model.
-  Layer 3 (causal)           — intervene on the model's internal token
+  Layer 3 (interventional)   — intervene on the model's internal token
     representation and measure the resulting behavior change.
 
 The most commonly used names are re-exported here; submodules

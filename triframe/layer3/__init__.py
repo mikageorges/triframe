@@ -1,7 +1,7 @@
 """
 triframe/layer3/__init__.py
 
-Layer 3 (causal): intervene on the model's internal token representation
+Layer 3 (interventional): intervene on the model's internal token representation
 and measure the resulting change in behavior.
 
 Core primitive:
@@ -256,12 +256,12 @@ def greedy_token_search(
     registry: TokenRegistry,
     single_token_iia: Dict[str, float],
     iia_fn: Callable[[List[int]], float],
-    max_set_size: int,
+    max_search_depth: int,
 ) -> List[Dict[str, Any]]:
     """
     Greedily grow a token set: start empty, at each step add whichever
     remaining token most increases joint IIA (per iia_fn, called with the
-    token POSITIONS for the trial set). Stops at max_set_size or when no
+    token POSITIONS for the trial set). Stops at max_search_depth or when no
     addition improves IIA.
 
     iia_fn : takes a list of GLOBAL TOKEN positions (0-indexed into the
@@ -284,7 +284,7 @@ def greedy_token_search(
     def positions_for(token_set: List[str]) -> List[int]:
         return [token_order.index(tok) for tok in token_set]
 
-    for step in range(1, max_set_size + 1):
+    for step in range(1, max_search_depth + 1):
         best_token, best_iia = None, None
         for candidate in remaining:
             trial_positions = positions_for(current_set + [candidate])
