@@ -307,7 +307,8 @@ def greedy_token_search(
         })
 
         prev_iia = rows[-2]["iia_joint"] if len(rows) > 1 else 0.0
-        if best_iia <= prev_iia:
-            break  # plateaued
+        if best_iia < prev_iia:
+            break  # only a real decrease stops search; a plateau (e.g. all
+                   # singles score 0) must continue, next step tests pairs
 
     return rows

@@ -1,4 +1,4 @@
-"""tests/test_layer3.py — Layer 3 (causal), applied to the minimal BVAE
+"""tests/test_layer3.py — Layer 3 (interventional), applied to the minimal BVAE
 example. Mechanics tests use the fast untrained fixture; synergy-detection
 tests use the session-scoped trained_synergy_adapter (see conftest.py for
 exact training recipe and validated ground-truth values).
@@ -103,6 +103,33 @@ def test_additive_null_known_cases():
     assert abs(additive_null_iia([0.5, 0.5]) - 0.75) < 1e-9
 
 
+def test_greedy_search_finds_synergy_invisible_to_single_tokens():
+    # regression: a plateau (all singles score 0) must not stop the search
+    # before the next step tests pairs, since only the pair scores 1.0
+    from triframe.data.tokens import TokenRegistry, BlockMeta, FeatureMeta
+
+    registry = TokenRegistry(blocks={"a": (BlockMeta(name="a"), [
+        FeatureMeta(name="f0", block="a", subgroup="tok_A"),
+        FeatureMeta(name="f1", block="a", subgroup="tok_B"),
+        FeatureMeta(name="f2", block="a", subgroup="tok_C"),
+    ])})
+    single_iia = {"tok_A": 0.0, "tok_B": 0.0, "tok_C": 0.0}
+
+    def iia_fn(positions):
+        names = ["tok_A", "tok_B", "tok_C"]
+        active = set(names[p] for p in positions)
+        return 1.0 if active == {"tok_A", "tok_B"} else 0.0
+
+    rows = greedy_token_search(
+        ["tok_A", "tok_B", "tok_C"], registry, single_iia, iia_fn, max_search_depth=3)
+
+    pair_found = any(r["current_set"] == "tok_A+tok_B" and r["iia_joint"] == 1.0
+                     for r in rows)
+    assert pair_found, (
+        "search stopped before discovering the tok_A+tok_B synergistic "
+        "pair — the plateau-detection break is too eager")
+
+
 # ---------------------------------------------------------------------------
 # Synergy detection (trained model — the real validation)
 # ---------------------------------------------------------------------------
@@ -153,7 +180,7 @@ def test_greedy_search_discovers_synergy_pair(trained_synergy_adapter, registry)
     all_tokens = registry.all_subgroups
     single_iia = {tok: iia_fn([i]) for i, tok in enumerate(all_tokens)}
 
-    rows = greedy_token_search(all_tokens, registry, single_iia, iia_fn, max_set_size=4)
+    rows = greedy_token_search(all_tokens, registry, single_iia, iia_fn, max_search_depth=4)
 
     picked_tokens = {r["added_token"] for r in rows[:2]}
     assert picked_tokens == {"synergy_a", "synergy_b"}, (

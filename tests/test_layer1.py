@@ -1,4 +1,4 @@
-"""tests/test_layer1.py — Layer 1 (model-functional), applied to the
+"""tests/test_layer1.py — Layer 1 (diagnostics), applied to the
 minimal BVAE example. Ground-truth thresholds below were validated by
 hand against data(n=2000, seed=0); see conftest.py's data fixture."""
 
@@ -58,6 +58,35 @@ def test_pattern_alignment_controlling_for_optional(data, registry):
     default = pattern_alignment(token, data["labels"])
     explicit_none = pattern_alignment(token, data["labels"], controlling_for=None)
     assert default == explicit_none
+
+
+def test_pattern_alignment_KNOWN_LIMITATION_noise_gives_high_score():
+    # not a bug: alignment ~1 even on pure noise, since correcting for
+    # covariance is a no-op when there's no real correlation to correct.
+    # read alongside frechet_distance or probe accuracy, never alone.
+    rng = np.random.default_rng(0)
+    n, d = 2000, 10
+
+    # independent Gaussian features, random labels
+    X_indep = rng.standard_normal((n, d))
+    y_random = rng.integers(0, 2, size=n)
+    align_indep = pattern_alignment(X_indep, y_random)
+    assert align_indep > 0.9, (
+        f"expected the KNOWN degenerate high score on independent noise, "
+        f"got {align_indep:.4f} — if this now fails, the formula may have "
+        f"changed; re-verify against real data before assuming a fix"
+    )
+
+    # correlated Gaussian features (shared latent factors), random labels —
+    # still high, even though real biological features are correlated too
+    base_factors = 4
+    loadings = rng.standard_normal((base_factors, d))
+    X_correlated = rng.standard_normal((n, base_factors)) @ loadings
+    align_correlated = pattern_alignment(X_correlated, y_random)
+    assert align_correlated > 0.9, (
+        f"expected the KNOWN degenerate high score on correlated noise "
+        f"too, got {align_correlated:.4f}"
+    )
 
 
 def test_ablation_identifies_strong_signal(untrained_adapter, data, registry):

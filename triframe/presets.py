@@ -50,21 +50,18 @@ def classification_success_fn(
     patched_output: Any,
     expected_class: Any,
 ) -> bool:
-    """
-    Layer 3 success_fn preset. Assumes both outputs are (n_classes,)
-    per-class scores/logits for a SINGLE sample (Layer 3 patching is
-    typically evaluated per-pair, not batched) and expected_class is a
-    scalar integer class index. Returns True if the patched prediction
-    matches expected_class — i.e. the intervention successfully flipped
-    (or preserved) the prediction toward the expected class.
-
-    baseline_output is accepted but unused here — included so this
-    matches the general success_fn(baseline, patched, expected) -> bool
-    signature layer3.py expects; some custom success_fn implementations
-    will want to compare against the baseline (e.g. "did the prediction
-    CHANGE" rather than "does it MATCH X"), but a simple classification
-    flip check only needs the patched output and the target.
-    """
-    patched_arr = _to_numpy(patched_output)
+    """Did the patched prediction match expected_class. patched_output
+    must already be the extracted (n_classes,) scores/logits, not the
+    raw adapter.run_forward() return — wrap with adapter.get_output_value()
+    first if your model returns a dict."""
+    if hasattr(patched_output, "keys"):
+        raise TypeError(
+            "got a dict, not an extracted array — call "
+            "adapter.get_output_value() on patched_output first"
+        )
+    try:
+        patched_arr = _to_numpy(patched_output)
+    except (TypeError, ValueError) as e:
+        raise TypeError(f"could not convert patched_output to an array: {e}") from e
     expected_idx = int(_to_numpy(expected_class))
     return int(patched_arr.argmax(axis=-1)) == expected_idx
