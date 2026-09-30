@@ -1,15 +1,18 @@
 # triframe
 
-Three-layer causal interpretability for token-structured models.
+This package helps to understand how your model uses genomic features.
 
+Genomic prediction models often combine groups of features, such as sequence composition, motif counts, and conservation scores. triframe helps investigate which groups carry predictive information, which the model relies on, and how predictions change when their internal representations are replaced.
+
+It combines model diagnostics, feature/label association analyses, and representation interventions in a common workflow.
 `triframe` validates subgroup/token-level interpretability claims at three
 progressively stronger levels:
 
-- **Layer 1 (model-functional)** — what a trained model's own internals
+- **Layer 1 (model-diagnostics)** — what a trained model's own internals
   (attention, ablation) directly expose about token reliance.
 - **Layer 2 (associational)** — how strongly a token's feature distribution
   differs across groups, independent of any model.
-- **Layer 3 (causal)** — intervene on the model's internal token
+- **Layer 3 (interventional)** — intervene on the model's internal token
   representation and measure the resulting change in behavior.
 
 Association is not causation: a token a model attends to heavily may
@@ -126,7 +129,7 @@ def get_attention_weights(self, model_output):
     return model_output["attn_weights"]
 ```
 
-## Layer 1 — model-functional
+## Layer 1 — model-diagnostics
 
 ```python
 from triframe.layer1 import aggregate_attention, run_ablation, pattern_alignment, representation_redundancy
@@ -187,7 +190,7 @@ conc[["token", "gini", "participation_ratio", "n_features_for_threshold"]]
 compare — works for any two groups, not just binary classification
 labels.
 
-## Layer 3 — causal
+## Layer 3 — interventional
 
 ```python
 from triframe.layer3 import (
@@ -278,6 +281,8 @@ adapter = MinimalAdapter(model)
 Layer 1/2, and for testing Layer 3's mechanics). Layer 3's synergy
 detection needs a model that's actually learned the relevant structure —
 see `train()`/`save_checkpoint()`/`load_checkpoint()` in the same module.
+
+The implementation is domain-independent: other applications can supply their own feature groups and model adapter.
 
 ## Development
 
